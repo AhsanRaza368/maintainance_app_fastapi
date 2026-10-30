@@ -1,0 +1,53 @@
+services:
+
+  api:
+    build: .
+    container_name: fastapi-container
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ./:/usr/src/app
+
+    environment:
+      DATABASE_HOSTNAME: postgres
+      DATABASE_PORT: 5432
+      DATABASE_PASSWORD: 12345678
+      DATABASE_NAME: role
+      DATABASE_USERNAME: postgres
+
+      OWNER_CODE: ahsan123
+      OWNER_SECRET_KEY: owner-secret-key
+      ADMIN_SECRET_KEY: admin-secret-key
+      ALGORITHM: HS256
+
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18
+    container_name: postgres
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_DB: role
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-db:/var/lib/postgresql
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d role"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-db:
